@@ -69,8 +69,8 @@ body {
   background: rgba(41, 41, 41, 0.274); 
   backdrop-filter: blur(3px); 
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.25); 
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.123);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 #NavInfo {
@@ -505,8 +505,8 @@ body {
   background: rgba(41, 41, 41, 0.274); 
   backdrop-filter: blur(3px); 
   -webkit-backdrop-filter: blur(3px);
-  border: 1px solid rgba(255, 255, 255, 0.25); 
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.123);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 
@@ -539,7 +539,7 @@ body {
   }
 
   #Cargos {
-      font-size: 13.6px;
+      font-size: 13.5px;
       text-align: center;
       margin-top: -42px;
   }
