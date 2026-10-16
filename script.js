@@ -1,8 +1,8 @@
 // Plano de Fundo Topográfico ---------------------------------------------------------------------------------------------
 
 import * as ChriscoursesPerlinNoise from "https://esm.sh/@chriscourses/perlin-noise";
-let showFPS = true;
-let MAX_FPS = 0;
+let showFPS = false;
+let MAX_FPS = 60;
 let thresholdIncrement = 5;
 let thickLineThresholdMultiple = 3;
 let res = 8;
@@ -22,8 +22,9 @@ let noiseMin = 100;
 let noiseMax = 0;
 let mousePos = { x: -99, y: -99 };
 let mouseDown = true;
+let lastFrameTime = 0;
 setupCanvas();
-animate();
+requestAnimationFrame(animate);
 function setupCanvas() {
     let canvasElement = document.getElementById('res-canvas');
     let canvasCtx = canvasElement.getContext('2d');
@@ -66,32 +67,31 @@ function canvasSize() {
       }
     }
   }
-function animate() {
-    const startTime = performance.now();
-    setTimeout(() => {
-        const endTime = performance.now();
-        const frameDuration = endTime - startTime;
+function animate(currentTime) {
+    if (currentTime - lastFrameTime >= 1000 / MAX_FPS) {
+        lastFrameTime = currentTime;
+        const frameDuration = currentTime - lastFrameTime;
         frameValues.push(Math.round(1000 / frameDuration));
         if (frameValues.length > 60 && showFPS) {
             fpsCount.innerText = Math.round(frameValues.reduce((a, b) => a + b) / frameValues.length);
             frameValues = [];
         }
-        requestAnimationFrame(() => animate());
-    }, 1000 / MAX_FPS);
-    if (mouseDown) {
-        mouseOffset();
+        if (mouseDown) {
+            mouseOffset();
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        zOffset += baseZOffset;
+        generateNoise();
+        const roundedNoiseMin = Math.floor(noiseMin / thresholdIncrement) * thresholdIncrement;
+        const roundedNoiseMax = Math.ceil(noiseMax / thresholdIncrement) * thresholdIncrement;
+        for (let threshold = roundedNoiseMin; threshold < roundedNoiseMax; threshold += thresholdIncrement) {
+            currentThreshold = threshold;
+            renderAtThreshold();
+        }
+        noiseMin = 100;
+        noiseMax = 0;
     }
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    zOffset += baseZOffset;
-    generateNoise();
-    const roundedNoiseMin = Math.floor(noiseMin / thresholdIncrement) * thresholdIncrement;
-    const roundedNoiseMax = Math.ceil(noiseMax / thresholdIncrement) * thresholdIncrement;
-    for (let threshold = roundedNoiseMin; threshold < roundedNoiseMax; threshold += thresholdIncrement) {
-        currentThreshold = threshold;
-        renderAtThreshold();
-    }
-    noiseMin = 100;
-    noiseMax = 0;
+    requestAnimationFrame(animate);
 }
 function mouseOffset() {
     var _a;
@@ -356,34 +356,6 @@ document.querySelectorAll('.fade-up').forEach((el) => {
     observer.observe(el);
 });
 
-// ------------------------------------------------------------------------------------------------------------------------
-
-// Script para trocar entre Modo Escuro e Modo Claro (clicando na carinha do footer) ---------------------------------------
-
-const carinha = document.getElementById('carinha');
-const carinhaTexto = carinha ? carinha.querySelector('h4') : null;
-
-function aplicarTema(claro) {
-    document.body.classList.toggle('light-mode', claro);
-    if (carinhaTexto) {
-        carinhaTexto.textContent = claro ? ' : D' : ' : )';
-    }
-    lineColor = claro ? '#00000045' : '#70707080';
-}
-
-const temaSalvo = localStorage.getItem('tema');
-aplicarTema(temaSalvo === 'claro');
-
-if (carinha) {
-    carinha.addEventListener('click', () => {
-        const claro = !document.body.classList.contains('light-mode');
-        aplicarTema(claro);
-        localStorage.setItem('tema', claro ? 'claro' : 'escuro');
-    });
-}
-
-// ------------------------------------------------------------------------------------------------------------------------
-
 document.querySelectorAll('a[href^="#"]').forEach(link => {
 
     link.addEventListener('click', function (e) {
@@ -410,3 +382,388 @@ document.querySelectorAll('a[href^="#"]').forEach(link => {
     });
 
 });
+
+// Theme Toggle Functionality -----------------------------------------------------------
+
+const themeToggle = document.getElementById('theme-toggle');
+const emoji = document.getElementById('emoji');
+const logo = document.getElementById('Logo');
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  
+  if (theme === 'light') {
+    emoji.textContent = ': D';
+    logo.src = 'imagens/Logo Alex B.png';
+  } else {
+    emoji.textContent = ': )';
+    logo.src = 'imagens/Logo Alex W.png';
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  applyTheme(newTheme);
+}
+
+themeToggle.addEventListener('click', toggleTheme);
+
+const savedTheme = localStorage.getItem('theme') || 'dark';
+applyTheme(savedTheme);
+
+const projectData = {
+
+  grimon: {
+    title: 'E-commerce - Grimon',                                  // Título do projeto (topo do modal)
+    description: 'Desenvolvimento de e-commerce completo para a Grimon, incluindo catálogo de produtos, carrinho de compras, checkout e integração com meios de pagamento. Cliente: Grimon. Motivação: Criar uma plataforma de vendas online robusta e escalável.', // Descrição (parágrafo)
+    tags: ['HTML5', 'CSS3', 'JavaScript', 'PHP', 'MySQL'],        // Tags (coloridos abaixo da descrição)
+    link: 'https://seu-link-1.com',                                // Link do botão "Acessar projeto"
+    images: [                                                      // 3 imagens do carrossel (lado esquerdo)
+      'imagens/Grimon.png',                                        // Imagem 1 (ativa por padrão)
+      'imagens/design1.jpg',                                       // Imagem 2
+      'imagens/design2.jpg'                                        // Imagem 3
+    ]
+  },
+
+  junta: {
+    title: 'Ideiathon Fatec - <span class="Laranja">Juntaê</span>',
+    description: 'Projeto desenvolvido durante Ideiathon na Fatec. Plataforma para conectar pessoas em eventos colaborativos. Cliente: Fatec Tatuí. Motivação: Solução para networking em hackathons e eventos acadêmicos.',
+    tags: ['Prototipação', 'Figma', 'UI/UX'],
+    link: 'https://www.figma.com/proto/6oBuXB3dEhhuHMzrkzVNyT/Junta%C3%AA-Site---PointMedia?node-id=1873-1410',
+    images: [
+      'imagens/projetos/Juntae 1.png',
+      'imagens/projetos/Juntae 2.png',
+      'imagens/projetos/Juntae 3.png'
+    ]
+  },
+
+  cerbela: {
+    title: 'Sistema de Pedidos - <span class="Laranja">Cerbela</span>',
+    description: 'Sistema de gestão de pedidos para a Cerbela, com controle de estoque, emissão de notas fiscais e relatórios gerenciais. Cliente: Cerbela. Motivação: Automatizar processos manuais e reduzir erros operacionais.',
+    tags: ['HTML5', 'CSS3', 'JavaScript'],
+    link: 'https://alexptavella.github.io/Gestao-de-Pedidos/',
+    images: [
+      'imagens/projetos/Sistemas de pedido - Cerbela 1.png',
+      'imagens/projetos/Sistemas de pedido - Cerbela - 2.png',
+      'imagens/projetos/Sistemas de pedido - Cerbela - 3.png'
+    ]
+  },
+
+  isaias: {
+    title: 'Oficina Digital - <span class="Laranja">Isaias Motos</span>',
+    description: 'Sistema ERP para oficina mecânica com agendamento, controle de serviços, estoque de peças e financeiro. Cliente: Isaias Motos. Motivação: Digitalizar a gestão da oficina substituindo planilhas e papel.',
+    tags: ['HTML5', 'CSS3', 'JavaScript', 'PHP', 'MySQL'],
+    link: 'https://alexptavella.github.io/Projeto-Erp-Oficina-Mecanica/',
+    images: [
+      'imagens/projetos/Oficina Digital - Isaias Motos 1.png',
+      'imagens/projetos/Oficina Digital - Isaias Motos 2.png',
+      'imagens/projetos/Oficina Digital - Isaias Motos 3.png'
+    ]
+  },
+
+  softcars: {
+    title: 'App Mobile - <span class="Laranja">SoftCars</span>',
+    description: 'Aplicativo mobile para gestão de frotas e veículos, com rastreamento, manutenção preventiva e relatórios. Cliente: SoftCars. Motivação: Modernizar a gestão de frotas com tecnologia mobile.',
+    tags: ['Prototipação', 'Figma', 'UI/UX'],
+    link: 'https://www.figma.com/design/EW469ZnuJO82PaiWIvK9LG',
+    images: [
+      'imagens/projetos/Softcars 1.png',
+      'imagens/projetos/Softcars 2.png',
+      'imagens/projetos/Spftcars 3.png'
+    ]
+  }
+};
+
+const projectModal = document.getElementById('project-modal');
+const modalClose = projectModal.querySelector('.project-modal-close');
+const carouselTrack = document.getElementById('carousel-track');
+const carouselDots = document.getElementById('carousel-dots');
+const modalTitle = document.getElementById('modal-title');
+const modalDescription = document.querySelector('.modal-project-description');
+const modalTags = document.getElementById('modal-tags');
+const modalLink = document.getElementById('modal-link');
+const carouselPrev = projectModal.querySelector('.carousel-prev');
+const carouselNext = projectModal.querySelector('.carousel-next');
+
+let currentProject = null;
+let currentSlide = 0;
+
+function openProjectModal(projectKey) {
+  const project = projectData[projectKey];
+  if (!project) return;
+  
+  currentProject = projectKey;
+  currentSlide = 0;
+  
+  modalTitle.innerHTML = project.title;
+  modalDescription.textContent = project.description;
+  modalLink.href = project.link;
+  
+  modalTags.innerHTML = '';
+  project.tags.forEach((tag, tagIndex) => {
+    const span = document.createElement('span');
+    span.className = 'modal-tag';
+    span.style.setProperty('--tag-index', tagIndex);
+    span.textContent = tag;
+    modalTags.appendChild(span);
+  });
+  
+  carouselTrack.innerHTML = '';
+  carouselDots.innerHTML = '';
+  project.images.forEach((imgSrc, index) => {
+    const slide = document.createElement('div');
+    slide.className = 'carousel-slide';
+    
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.alt = `${project.title} - Imagem ${index + 1}`;
+    img.loading = index === 0 ? 'eager' : 'lazy';
+    slide.appendChild(img);
+    
+    carouselTrack.appendChild(slide);
+    
+    const dot = document.createElement('button');
+    dot.className = 'carousel-dot' + (index === 0 ? ' active' : '');
+    dot.style.setProperty('--dot-index', index);
+    dot.setAttribute('aria-label', `Ir para imagem ${index + 1}`);
+    dot.addEventListener('click', () => goToSlide(index));
+    carouselDots.appendChild(dot);
+    
+    // Clique na imagem para abrir zoom
+    img.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openZoomModal(img.src);
+    });
+  });
+  
+  updateCarousel();
+  projectModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProjectModal() {
+  projectModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function goToSlide(index) {
+  const project = projectData[currentProject];
+  if (!project) return;
+  currentSlide = Math.max(0, Math.min(index, project.images.length - 1));
+  updateCarousel();
+}
+
+function updateCarousel() {
+  const project = projectData[currentProject];
+  if (!project) return;
+  
+  carouselTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+  
+  const dots = carouselDots.querySelectorAll('.carousel-dot');
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === currentSlide);
+  });
+  
+  carouselPrev.style.display = currentSlide === 0 ? 'none' : 'flex';
+  carouselNext.style.display = currentSlide === project.images.length - 1 ? 'none' : 'flex';
+}
+
+document.querySelectorAll('.card[data-project]').forEach(card => {
+  card.addEventListener('click', () => {
+    openProjectModal(card.dataset.project);
+  });
+  
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openProjectModal(card.dataset.project);
+    }
+  });
+});
+
+modalClose.addEventListener('click', closeProjectModal);
+
+modalLink.addEventListener('click', (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  if (modalLink.href && modalLink.href !== '#') {
+    window.open(modalLink.href, '_blank', 'noopener,noreferrer');
+  }
+});
+
+projectModal.addEventListener('click', (e) => {
+  if (e.target === projectModal) {
+    closeProjectModal();
+  }
+});
+
+carouselPrev.addEventListener('click', () => goToSlide(currentSlide - 1));
+carouselNext.addEventListener('click', () => goToSlide(currentSlide + 1));
+
+// ============================================================================
+// ZOOM DE IMAGEM DO CARROSSEL - Mesma função da galeria inicial
+// Ao clicar em uma imagem do carrossel, abre zoom suave na tela
+// ============================================================================
+
+// Cria o elemento do modal de zoom dinamicamente
+const zoomModal = document.createElement('div');
+zoomModal.id = 'project-zoom-modal';
+zoomModal.className = 'project-zoom-modal';
+zoomModal.setAttribute('role', 'dialog');
+zoomModal.setAttribute('aria-modal', 'true');
+zoomModal.style.display = 'none';
+zoomModal.style.position = 'fixed';
+zoomModal.style.inset = '0';
+zoomModal.style.zIndex = '3000';
+zoomModal.style.backdropFilter = 'blur(8px)';
+zoomModal.style.webkitBackdropFilter = 'blur(8px)';
+zoomModal.style.background = 'rgba(0, 0, 0, 0.85)';
+zoomModal.style.justifyContent = 'center';
+zoomModal.style.alignItems = 'center';
+zoomModal.style.padding = '20px';
+zoomModal.style.boxSizing = 'border-box';
+document.body.appendChild(zoomModal);
+
+const zoomImg = document.createElement('img');
+zoomImg.id = 'project-zoom-img';
+zoomImg.style.maxWidth = '90vw';
+zoomImg.style.maxHeight = '90vh';
+zoomImg.style.objectFit = 'contain';
+zoomImg.style.borderRadius = '8px';
+zoomImg.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.5)';
+zoomImg.style.cursor = 'grab';
+zoomModal.appendChild(zoomImg);
+
+const zoomClose = document.createElement('button');
+zoomClose.id = 'project-zoom-close';
+zoomClose.innerHTML = '&times;';
+zoomClose.style.position = 'absolute';
+zoomClose.style.top = '20px';
+zoomClose.style.right = '20px';
+zoomClose.style.width = '40px';
+zoomClose.style.height = '40px';
+zoomClose.style.border = 'none';
+zoomClose.style.background = 'rgba(255, 115, 0, 0.2)';
+zoomClose.style.backdropFilter = 'blur(10px)';
+zoomClose.style.webkitBackdropFilter = 'blur(10px)';
+zoomClose.style.border = '1px solid rgba(255, 115, 0, 0.3)';
+zoomClose.style.borderRadius = '50%';
+zoomClose.style.color = '#fff';
+zoomClose.style.fontSize = '28px';
+zoomClose.style.cursor = 'pointer';
+zoomClose.style.display = 'flex';
+zoomClose.style.alignItems = 'center';
+zoomClose.style.justifyContent = 'center';
+zoomClose.style.zIndex = '3100';
+zoomClose.style.transition = 'all 0.2s';
+zoomModal.appendChild(zoomClose);
+
+let zoomScale = 1;
+let zoomPosX = 0, zoomPosY = 0;
+let zoomIsDragging = false;
+let zoomStartX, zoomStartY;
+
+function applyZoomTransform() {
+  zoomImg.style.transform = `translate(${zoomPosX}px, ${zoomPosY}px) scale(${zoomScale})`;
+}
+
+function openZoomModal(src) {
+  zoomImg.src = src;
+  zoomScale = 1;
+  zoomPosX = 0;
+  zoomPosY = 0;
+  zoomImg.style.transform = 'none';
+  zoomModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeZoomModal() {
+  zoomModal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Eventos do modal de zoom
+zoomClose.addEventListener('click', closeZoomModal);
+
+zoomModal.addEventListener('click', (e) => {
+  if (e.target === zoomModal) {
+    closeZoomModal();
+  }
+});
+
+zoomClose.addEventListener('mouseenter', () => {
+  zoomClose.style.background = 'rgba(255, 115, 0, 0.4)';
+  zoomClose.style.transform = 'scale(1.1)';
+});
+
+zoomClose.addEventListener('mouseleave', () => {
+  zoomClose.style.background = 'rgba(255, 115, 0, 0.2)';
+  zoomClose.style.transform = 'scale(1)';
+});
+
+// Wheel para zoom
+zoomModal.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  zoomScale += delta;
+  zoomScale = Math.max(0.5, Math.min(zoomScale, 5));
+  applyZoomTransform();
+}, { passive: false });
+
+// Drag para pan
+zoomImg.addEventListener('mousedown', (e) => {
+  zoomIsDragging = true;
+  zoomStartX = e.clientX - zoomPosX;
+  zoomStartY = e.clientY - zoomPosY;
+  zoomImg.style.cursor = 'grabbing';
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!zoomIsDragging) return;
+  zoomPosX = e.clientX - zoomStartX;
+  zoomPosY = e.clientY - zoomStartY;
+  applyZoomTransform();
+});
+
+document.addEventListener('mouseup', () => {
+  zoomIsDragging = false;
+  zoomImg.style.cursor = 'grab';
+});
+
+// Teclado
+document.addEventListener('keydown', (e) => {
+  if (!zoomModal.style.display || zoomModal.style.display === 'none') return;
+  if (e.key === 'Escape') {
+    closeZoomModal();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (!projectModal.classList.contains('open')) return;
+  if (e.key === 'Escape') {
+    if (zoomModal.style.display === 'flex') {
+      closeZoomModal();
+    } else {
+      closeProjectModal();
+    }
+  } else if (e.key === 'ArrowLeft') {
+    if (zoomModal.style.display !== 'flex') goToSlide(currentSlide - 1);
+  } else if (e.key === 'ArrowRight') {
+    if (zoomModal.style.display !== 'flex') goToSlide(currentSlide + 1);
+  }
+});
+
+let touchStartX = 0;
+carouselTrack.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+
+carouselTrack.addEventListener('touchend', (e) => {
+  const touchEndX = e.changedTouches[0].screenX;
+  const diff = touchStartX - touchEndX;
+  if (Math.abs(diff) > 50) {
+    goToSlide(currentSlide + (diff > 0 ? 1 : -1));
+  }
+}, { passive: true });
